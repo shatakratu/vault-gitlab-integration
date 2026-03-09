@@ -1,18 +1,19 @@
-# GitLab CE + HashiCorp Vault Integration Guide
+# GitLab CE + Vault OSS Integration
 
-This guide explains how to integrate GitLab Community Edition (CE) with HashiCorp Vault (Open Source) using AppRole authentication to securely inject secrets into GitLab CI/CD pipelines.
+Minimal guide for integrating HashiCorp Vault OSS with GitLab CE CI/CD using AppRole authentication.
 
 ---
 
 ## Overview
 
-This guide covers:
+Steps covered in this guide:
 
-- Enabling KV v2 secrets engine
-- Creating and applying a Vault policy
-- Configuring AppRole authentication
-- Connecting GitLab CI/CD to Vault
-- Retrieving secrets securely in a pipeline
+1.  Enable KV v2 secrets engine
+2.  Create a Vault policy
+3.  Configure AppRole authentication
+4.  Generate credentials for GitLab
+5.  Add CI/CD variables
+6.  Retrieve secrets in a pipeline
 
 ---
 
@@ -32,21 +33,17 @@ vault kv put kv-v2/myapp DB_USER=secret1 DB_PASS=secret2
 
 ---
 
-## 2. Create a Vault Policy
+## 2. Create Vault Policy
 
 Create a policy file:
 
-```bash
+``` bash
 vi gitlab-policy.hcl
 ```
 
-Contents of `gitlab-policy.hcl`:
+`gitlab-policy.hcl`
 
-```hcl
-path "kv-v2/myapp" {
-  capabilities = ["read"]
-}
-
+``` hcl
 path "kv-v2/data/myapp" {
   capabilities = ["read"]
 }
@@ -54,34 +51,31 @@ path "kv-v2/data/myapp" {
 
 Apply the policy:
 
-```bash
+``` bash
 vault policy write gitlab-policy gitlab-policy.hcl
-vault policy read gitlab-policy
 ```
 
 ---
 
-## 3. Enable and Configure AppRole
-
-Enable AppRole authentication:
+## 3. Enable AppRole
 
 ```bash
 vault auth enable approle
 ```
 
-Create a role for GitLab:
+Create a role:
 
 ```bash
 vault write auth/approle/role/gitlab-role \
     token_policies="gitlab-policy" \
-    secret_id_ttl=0 \
     token_ttl=10m \
-    token_max_ttl=20m
+    token_max_ttl=20m \
+    secret_id_ttl=0 # WARNING: never expires
 ```
 
 ---
 
-## 4. Retrieve ROLE_ID and SECRET_ID
+## 4. Get Role Credentials
 
 Get the Role ID:
 
@@ -95,7 +89,7 @@ Generate a Secret ID:
 vault write -f -field=secret_id auth/approle/role/gitlab-role/secret-id
 ```
 
-Store both values securely. They will be used as GitLab CI/CD variables.
+These values will be stored in GitLab CI/CD variables.
 
 ---
 
@@ -103,7 +97,7 @@ Store both values securely. They will be used as GitLab CI/CD variables.
 
 In your GitLab project:
 
-**Settings → CI/CD → Variables**
+Project → **Settings → CI/CD → Variables**
 
 Add the following variables:
 
@@ -121,9 +115,9 @@ VAULT_ADDR=https://vault.example.com:8200
 
 ---
 
-## 6. Create `.gitlab-ci.yml`
+## 6. Pipeline Example
 
-Create .gitlab-ci.yml in the project root:
+Create `.gitlab-ci.yml`:
 
 ```yaml
 stages:
@@ -151,5 +145,6 @@ build-job:
 
 ## Result
 
-Your GitLab CI/CD pipelines now securely fetch secrets from Vault without storing them in the repository.
+The GitLab pipeline authenticates to Vault using AppRole and retrieves
+secrets securely during execution.
 
