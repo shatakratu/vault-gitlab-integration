@@ -1,4 +1,4 @@
-# GitLab CE + Vault OSS Integration
+# GitLab CE & HashiCorp Vault OSS Integration
 
 Minimal guide to integrating HashiCorp Vault OSS with GitLab CE using AppRole authentication.
 
