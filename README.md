@@ -103,7 +103,7 @@ Add the following variables:
 
 | Variable Name      | Description              | Masked | Protected |
 |--------------------|--------------------------|--------|-----------|
-| VAULT_ADDR         | Vault server address     | No     | Optional  |
+| VAULT_ADDR         | IP:PORT                  | No     | Optional  |
 | VAULT_ROLE_ID      | AppRole Role ID          | Yes    | Yes       |
 | VAULT_SECRET_ID    | AppRole Secret ID        | Yes    | Yes       |
 
